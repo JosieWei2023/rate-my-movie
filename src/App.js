@@ -31,13 +31,15 @@ export default function App() {
 
   useEffect(
     function () {
+      const controller = new AbortController();
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError("");
 
           const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal }
           );
 
           if (!res.ok)
@@ -66,6 +68,11 @@ export default function App() {
       handleCloseMovie();
 
       fetchMovies();
+
+      // clean-up function
+      return function () {
+        controller.abort();
+      };
     },
     [query]
   );
@@ -258,13 +265,10 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
   useEffect(
     function () {
-      const controller = new AbortController();
-
       async function getMovieDetails() {
         setIsLoading(true);
         const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`,
-          { signal: controller.signal }
+          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
         );
 
         const data = await res.json();
@@ -272,11 +276,6 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
         setIsLoading(false);
       }
       getMovieDetails();
-
-      // clean-up function
-      return function () {
-        controller.abort();
-      };
     },
     [selectedId]
   );
