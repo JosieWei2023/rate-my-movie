@@ -7,7 +7,7 @@ const average = (arr) =>
 
 export default function App() {
   const [movies, setMovies] = useState([]);
-  const [query, setQuery] = useState("inception");
+  const [query, setQuery] = useState("friends");
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,8 +47,11 @@ export default function App() {
           if (data.Response === "False") throw new Error("Movie not found");
 
           setMovies(data.Search);
+          setError("");
         } catch (err) {
-          setError(err.message);
+          if (err.name !== "AbortError") {
+            setError(err.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -237,10 +240,24 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
   useEffect(
     function () {
+      document.addEventListener("keydown", function (e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      });
+    },
+    [onCloseMovie]
+  );
+
+  useEffect(
+    function () {
+      const controller = new AbortController();
+
       async function getMovieDetails() {
         setIsLoading(true);
         const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`,
+          { signal: controller.signal }
         );
 
         const data = await res.json();
@@ -248,6 +265,11 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
         setIsLoading(false);
       }
       getMovieDetails();
+
+      // clean-up function
+      return function () {
+        controller.abort();
+      };
     },
     [selectedId]
   );
@@ -256,6 +278,11 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     function () {
       if (!title) return;
       document.title = `Movie | ${title}`;
+
+      //clean up function
+      return function () {
+        document.title = "DaMao Movie";
+      };
     },
     [title]
   );
