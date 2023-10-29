@@ -45,6 +45,7 @@ export default function App() {
 
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie not found");
+          45;
 
           setMovies(data.Search);
           setError("");
@@ -62,6 +63,8 @@ export default function App() {
         setError("");
         return;
       }
+
+      handleCloseMovie();
 
       fetchMovies();
     },
